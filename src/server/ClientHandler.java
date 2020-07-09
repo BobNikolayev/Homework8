@@ -43,7 +43,18 @@ public class ClientHandler {
                                 login = token[1];
                                 server.subscribe(this);
                                 System.out.printf("Клиент %s подключился \n", nick);
-                              
+                                //После подключения таймер обнуляется.
+                                socket.setSoTimeout(0);
+                                break;
+                            } else {
+                                sendMsg("Неверный логин / пароль");
+                                //Пока не пройзойдёт первая попытка авторизации таймер не запускается потому что подключение к серверу не происходит.
+                                try{
+                                    socket.setSoTimeout(5000);
+                                }catch (Exception e) {
+                                    e.printStackTrace();
+                                    break;
+                                }
 
                             }
                         }
