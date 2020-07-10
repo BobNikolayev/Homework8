@@ -32,11 +32,14 @@ public class Server {
             System.out.println("Сервер запущен!");
 
             while (true) {
+                
+                
                 socket = server.accept();
                 System.out.println("Клиент подключился");
                 System.out.println("socket.getRemoteSocketAddress(): "+socket.getRemoteSocketAddress());
                 System.out.println("socket.getLocalSocketAddress() "+socket.getLocalSocketAddress());
                 new ClientHandler(this, socket);
+
             }
         } catch (IOException e) {
             e.printStackTrace();
