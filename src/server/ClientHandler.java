@@ -1,22 +1,44 @@
 package server;
 
+
+import javax.management.RuntimeOperationsException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.Timer;
+import java.util.TimerTask;
+
 
 public class ClientHandler {
     Server server;
     Socket socket = null;
     DataInputStream in;
     DataOutputStream out;
-
     private String nick;
     private String login;
 
+    private Timer mTimer;
+    private TimerTask mMyTimerTask;
     public ClientHandler(Server server, Socket socket) {
+  //тфймер по истечкнию которого будут исполнятся действия в таймертаск
+        mTimer = new Timer();
+   //команды для исполнения по окончаеию таймера
+        mMyTimerTask = new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    out.writeUTF("/timeout ");
+                    out.writeUTF("/timeout ");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
         try {
             this.server = server;
             this.socket = socket;
@@ -25,7 +47,7 @@ public class ClientHandler {
 
             new Thread(() -> {
                 try {
-                    //цикл аутентификации
+      //цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
 
@@ -44,36 +66,37 @@ public class ClientHandler {
                                 server.subscribe(this);
                                 System.out.printf("Клиент %s подключился \n", nick);
                                 //После подключения таймер обнуляется.
-                                socket.setSoTimeout(0);
                                 break;
                             } else {
                                 sendMsg("Неверный логин / пароль");
-                                //Пока не пройзойдёт первая попытка авторизации таймер не запускается потому что подключение к серверу не происходит.
-                                try{
-                                    socket.setSoTimeout(5000);
-                                }catch (Exception e) {
-                                    e.printStackTrace();
-                                    break;
-                                }
-
+ //Использование таймера с командами
+                                mTimer.schedule(mMyTimerTask,5000);
                             }
                         }
 
                         server.broadcastMsg(str);
+
+
                     }
                     //цикл работы
-                    while (true) {
-                        String str = in.readUTF();
+                    while(true){
 
-                        if (str.equals("/end")) {
-                            out.writeUTF("/end");
-                            break;
-                        }
+                            while (true) {
+                                String str = in.readUTF();
 
-                        server.broadcastMsg(str);
+                                if (str.equals("/end")) {
+                                    out.writeUTF("/end");
+                                    break;
+                                }
+
+                                server.broadcastMsg(str);
+                            }
+
                     }
+
                 } catch (IOException e) {
                     e.printStackTrace();
+
                 } finally {
                     System.out.println("Клиент отключился");
                     server.unsubscribe(this);
@@ -95,7 +118,6 @@ public class ClientHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
     }
 

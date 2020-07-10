@@ -99,6 +99,11 @@ public class Controller implements Initializable {
                             setAuthenticated(true);
                             break;
                         }
+ //условие для команды /timeout
+                        else if(str.startsWith("/timeout ")){
+                            setAuthenticated(false);
+                            break;
+                        }
 
                         textArea.appendText(str + "\n");
                     }
@@ -107,13 +112,22 @@ public class Controller implements Initializable {
                     //цикл работы
                     while (true) {
                         String str = in.readUTF();
+//Условия чтобы не выкинуло с рабочего цыкла на случай если до окончания времени прйзойдёт авторизация
+                        if(authenticated == true && str.equals("/timeout ")){
+
+                        }else if(authenticated == false && str.equals("/timeout ")){
+                            setAuthenticated(false);
+                            break;
+                        }
 
                         if (str.equals("/end")) {
                             setAuthenticated(false);
                             break;
                         }
-
-                        textArea.appendText(str + "\n");
+//Условие чтобы не розаичатывало команды /timeout после авторизации
+                        if(!str.equals("/timeout ")) {
+                            textArea.appendText(str + "\n");
+                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
